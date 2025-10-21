@@ -1,4 +1,4 @@
-# webscraping
+# Webscraping
 
 This folder contains a small web scraper that extracts country data from a static demo site and writes it to CSV.
 
