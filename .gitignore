@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.env
+venv/
+.env/
+.pytest_cache/
+
+# Editor directories
+.vscode/
+.idea/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Data and export files
+*.csv
+*.xls
+*.xlsx
+
+# Workshop PPTX to ignore
+workshop_2.pptx
