@@ -1,4 +1,4 @@
-# Python
+﻿# Python
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -25,3 +25,4 @@ Thumbs.db
 
 # Workshop PPTX to ignore
 workshop_2.pptx
+Workshop_3.pptx
