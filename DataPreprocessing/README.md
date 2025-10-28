@@ -1,4 +1,4 @@
-# datapreprocessing
+# Data Preprocessing
 
 This folder contains starter tools for preprocessing scraped data before feeding it to NLP models.
 
