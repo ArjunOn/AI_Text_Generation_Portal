@@ -2,6 +2,17 @@
 
 This repository contains a small web scraper that extracts country data from a static demo site and writes it to CSV.
 
+## Recent updates (2025-10-30)
+
+- Added a modelling workflow under `Modelling/` containing a nanoGPT-based assignment, prepared data, experiments and reproducibility helpers.
+- Flattened experiment logs into `Modelling/experiments/` and added reproducibility scripts:
+	- `Modelling/init_submodule.ps1` — initialize/update the nanoGPT submodule and list available checkpoints
+	- `Modelling/nanoGPT_assignment/run_all.sh` — POSIX-compatible wrapper to prepare the dataset, run a short sanity training, and sample from the model
+	- `Modelling/nanoGPT_assignment/requirements-pinned.txt` — pinned package versions used in the project's venv for exact reproducibility
+- Checkpoint policy: large training checkpoints (ckpt.pt) are intentionally kept in the nanoGPT submodule at `Modelling/nanoGPT_project/out-*` to avoid bloating the main repo. See `Modelling/README.md` for detailed reproduction instructions.
+
+If you want me to copy a specific checkpoint into the main repo or upload it to a release/storage location, tell me which one and I'll add it.
+
 ## What it does
 - Fetches HTML from `https://www.scrapethissite.com/pages/simple/`.
 - Parses country entries and extracts: Name, Capital, Population, Area.
