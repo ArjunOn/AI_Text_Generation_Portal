@@ -91,11 +91,41 @@ If `sample.py` fails to decode some tokens (token id mismatch), use `sample_safe
 
 ---
 
-If you want, I can now:
-- Flatten the nested `Modelling/experiments/experiments` directory into `Modelling/experiments/`.
-- Copy a selected checkpoint into `Modelling/experiments/` (not recommended unless you want to track it in the main repo).
-- Add a simple wrapper script to reproduce the top-level steps.
+Reproducibility helpers (added)
 
-Tell me which of those you'd like next and I'll implement it.
+I added a few small helper files to make reproducing the prepare → train → sample workflow easier from the main repo:
+
+- `Modelling/init_submodule.ps1` — Initializes and updates the `Modelling/nanoGPT_project` submodule and lists available `out-*` directories (where checkpoints live).
+- `Modelling/nanoGPT_assignment/run_all.ps1` — A convenience PowerShell script that:
+  - runs the `prepare.py` tokenizer to (re)create `train.bin`, `val.bin`, `meta.pkl` inside the assignment copy;
+  - runs a short sanity training session (small model / few iterations) from the nanoGPT project venv to validate end-to-end; and
+  - runs `sample_safe.py` to produce a few generated examples into the selected `out_dir`.
+- `Modelling/nanoGPT_assignment/requirements.txt` — list of core packages used by the experiments (useful if you want to recreate a venv outside the project `.venv`).
+
+Checkpoint policy
+
+Checkpoints produced by training are intentionally left in the nanoGPT submodule under `Modelling/nanoGPT_project/out-*` to avoid adding large binaries to the main repository. This keeps the main repo lightweight and reproducible. If you'd like me to copy a specific checkpoint into `Modelling/experiments/` (or upload it to a release or cloud storage), tell me which one and I'll do that.
+
+How to use the helpers
+
+1) Initialize the submodule (runs `git submodule update --init --recursive`):
+
+```powershell
+Set-Location A:\Projects\AI_Text_Generation_Portal
+& .\Modelling\init_submodule.ps1
+```
+
+2) Run the end-to-end reproducibility script (will call the project venv Python if available):
+
+```powershell
+Set-Location A:\Projects\AI_Text_Generation_Portal
+& .\Modelling\nanoGPT_assignment\run_all.ps1
+```
+
+The `run_all.ps1` script uses the nanoGPT project's venv at `Modelling/nanoGPT_project/.venv\Scripts\python.exe` if present; otherwise it falls back to `python` on PATH. It runs a short sanity training (fast) by default so you can validate the full flow quickly. Modify the script to change hyperparameters or `max_iters` if you want a longer run.
+
+Flattening the experiments folder
+
+I will now flatten the nested `Modelling/experiments/experiments/` into `Modelling/experiments/` so the logs and samples are at a single predictable path. The original nested folder will be removed after the move. If you prefer I preserve the nested structure or instead archive the current structure, tell me and I will revert.
 
 Generated on: 2025-10-30
