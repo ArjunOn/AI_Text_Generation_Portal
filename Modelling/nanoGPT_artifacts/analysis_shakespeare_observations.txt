@@ -1,0 +1,45 @@
+Shakespeare training observations
+================================
+
+Created: 2025-11-12
+
+Notes so far:
+- Dataset length: 1,115,394 characters; vocab size: 65
+- train tokens: 1,003,854; val tokens: 111,540
+- Environment: Python 3.12.8 in .venv; torch 2.9.0 (CPU); numpy 2.3.4
+- Training started with params: device=cpu, compile=False, eval_iters=20, log_interval=1, block_size=64, batch_size=12, n_layer=4, n_head=4, n_embd=128, max_iters=2000, lr_decay_iters=2000
+
+Current status: training process started and logs are being written to ../out-shakespeare-train.log
+
+Observations (to be filled as training runs):
+
+Training finished (run parameters above):
+
+- Final reported at step 2000: train loss 1.7648, val loss 1.8857
+- Per-iteration losses during later training hovered between ~1.6 and ~1.9 with noise; no clear steady monotonic decrease but overall training loss is lower than initial values seen in early debug runs (~10-ish in previous sessions).
+
+Initial answers to monitoring questions:
+
+- Is the loss going up, down, staying constant, or none of the above?
+	- The loss is noisy but trending down relative to an initial high; during this 2000-iter run the training loss fluctuated between ~1.6–1.9 and the validation loss is slightly higher and noisy (~1.88 at the final eval).
+
+- How do these values change with different parameters?
+	- (To be explored) Smaller models or fewer iterations tend to overfit quickly; larger models or higher learning rates will change absolute values and training speed.
+
+- What happens when I increase the number of iterations?
+	- Typically training loss continues to slowly decrease and may overfit to training data; validation behavior may diverge depending on model size and regularization.
+
+- What happens when I increase the number of layers?
+	- Increasing layers generally increases model capacity and may lower training loss but requires more compute; overfitting risk increases if dataset is small.
+
+- What happens with different embedding sizes?
+	- Larger embedding (n_embd) increases representational power and typically lowers training loss but at compute/memory cost.
+
+- What happens with different eval_iters values?
+	- Larger eval_iters makes evaluation slower but provides a lower-variance estimate of validation loss; small eval_iters can be noisy.
+
+Next steps:
+
+- Generate samples using sample.py and save outputs to a file.
+- Run targeted parameter sweeps (fewer iterations for quick experiments) and record results here.
+
