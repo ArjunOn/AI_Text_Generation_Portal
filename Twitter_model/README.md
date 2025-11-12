@@ -154,4 +154,11 @@ Use `sample_safe.py` if you encounter token id mismatches.
 ### Closing summary
 The modelling assignment produced a reproducible prepare → train → sample workflow, artifacts (tokenized dataset, logs, generated samples), and checkpoints in the nanoGPT submodule. Short runs validated the pipeline; a longer CPU run showed further loss reduction but remains compute-limited. The repo contains helper scripts to initialize the submodule and run an end-to-end sanity test. Next steps are to add a small orchestrator, pin package versions, and (optionally) move or share selected checkpoints.
 
+<<<<<<<< HEAD:Modelling - Copy/README.md
 
+========
+<<<<<<< HEAD:Modelling/README.md
+=======
+
+>>>>>>> bce2816 (chore: remove Modelling folder (user requested cleanup)):Modelling - Copy/README.md
+>>>>>>>> wip/push-modelling-changes:Twitter_model/README.md
