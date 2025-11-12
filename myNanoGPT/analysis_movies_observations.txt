@@ -1,0 +1,26 @@
+Summary of movie dataset cleaning, preparation, and sampling
+
+Files added/updated:
+- scripts/clean_input.py  — new cleaning script (backs up raw input and writes cleaned input)
+- data/movies/input_clean.txt  — cleaned version of the movie corpus
+- prepare_movies.log  — output from running `data/movies/prepare.py` on the cleaned input
+- samples_movies.txt  — 5 sample outputs generated from the checkpoint (if present)
+
+Key actions performed:
+- Backed up original raw corpus to `data/movies/input_raw.txt`.
+- Cleaned corpus to strip HTML-like tags, unescape entities, remove control chars, and collapse whitespace.
+- Re-ran `prepare.py` on cleaned input.
+  - New token counts: train = 4,380,134 tokens; val = 486,435 tokens
+  - (Previous tokenization on the raw input was: train = 5,909,906; val = 655,952)
+- Restarted training in background with conservative params (eval_interval=50, max_iters=500) so checkpoints occur quickly for inspection.
+
+Artifacts and notes:
+- Checkpoint present (if saved): `myNanoGPT/out_movies/ckpt.pt` (~87 MB)
+- Samples written to: `myNanoGPT/samples_movies.txt` — early samples show noisy tokens but cleaning should improve coherence as training continues.
+
+Recommendations / next steps:
+1. Continue background training for more iterations (increase `--max_iters`) to improve sample quality.
+2. Consider further corpus cleanup (remove rare tokens or explicit HTML snippets) or normalize punctuation.
+3. If you want to preserve large checkpoint files in the repo, use Git LFS or an external artifact storage; do not add 80+ MB checkpoints to git on the main branch.
+
+Contact: I can push these files now (except large binary checkpoint) or create a branch if you prefer. 
