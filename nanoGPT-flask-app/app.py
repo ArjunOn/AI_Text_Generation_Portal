@@ -3,6 +3,7 @@ import subprocess
 import sys
 import os
 import re
+from pathlib import Path
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 
@@ -47,15 +48,31 @@ def generate():
     }
     out_dir = out_dirs.get(dataset, 'out_movies')
 
+    # Run sample.py from the myNanoGPT folder (we keep the model and scripts there)
+    repo_root = Path(__file__).resolve().parents[1]
+    mynano_dir = repo_root / 'myNanoGPT'
+    sample_script = mynano_dir / 'sample.py'
+    if not sample_script.exists():
+        return jsonify({'output': '', 'error': f'sample.py not found at {sample_script}'}), 500
+
     # Build command using the same Python interpreter running the Flask app
-    cmd = [sys.executable, 'sample.py', f'--out_dir={out_dir}', '--device=cpu', f'--num_samples=1', f'--max_new_tokens={max_new_tokens}', '--dtype=float32']
+    cmd = [sys.executable, str(sample_script), f'--out_dir={out_dir}', '--device=cpu', f'--num_samples=1', f'--max_new_tokens={max_new_tokens}', '--dtype=float32']
     # add temperature if provided
     if temperature is not None:
         cmd.append(f'--temperature={temperature}')
 
-    # Run sample.py and capture stdout
+    # Ensure the requested out_dir exists and has a checkpoint
+    out_dir_path = mynano_dir / out_dir
+    if not out_dir_path.exists() or not out_dir_path.is_dir():
+        available = sorted([p.name for p in mynano_dir.glob('out_*') if p.is_dir()])
+        return jsonify({'output': '', 'error': f'Checkpoint directory "{out_dir}" not found. Available checkpoints: {available}'}), 400
+    ckpt_file = out_dir_path / 'ckpt.pt'
+    if not ckpt_file.exists():
+        return jsonify({'output': '', 'error': f'No checkpoint (ckpt.pt) found in {out_dir_path}. Available files: {list(out_dir_path.iterdir())}'}), 400
+
+    # Run sample.py and capture stdout; set cwd to myNanoGPT so relative imports/files resolve
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, cwd=os.getcwd(), timeout=120)
+        proc = subprocess.run(cmd, capture_output=True, text=True, cwd=str(mynano_dir), timeout=300)
         stdout = proc.stdout
         stderr = proc.stderr
         if proc.returncode != 0:
