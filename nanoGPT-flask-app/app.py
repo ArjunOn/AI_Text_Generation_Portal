@@ -3,6 +3,7 @@ import subprocess
 import sys
 import os
 import re
+import random
 from pathlib import Path
 
 app = Flask(__name__, static_folder='.', static_url_path='')
@@ -29,24 +30,62 @@ def extract_generated_text(raw: str) -> str:
     return '\n\n'.join(good) if good else parts[-1]
 
 
+def sanitize_output(text: str) -> str:
+    """Post-process generated text to remove isolated noisy symbols and collapse punctuation.
+    This does not change model weights but makes UI output more readable while we improve data.
+    """
+    # normalize newlines
+    s = text.replace('\r\n', '\n')
+    # remove isolated runs of symbols like @, $, %, ^, * when they appear as standalone tokens
+    s = re.sub(r"\b[@$%^&*~]{1,}\b", ' ', s)
+    # remove caret clusters and other repeated symbol runs
+    s = re.sub(r"[\^]{2,}", ' ', s)
+    # remove isolated single punctuation tokens between spaces (e.g. ' @ ' or ' $ ')
+    s = re.sub(r'(?<=\s)[^\w\s](?=\s)', ' ', s)
+    # collapse multiple punctuation like '!!' or '??' to a single char
+    s = re.sub(r'([!?.]){2,}', r'\1', s)
+    # collapse multiple spaces/newlines
+    s = re.sub(r'[ \t\f\v]+', ' ', s)
+    s = re.sub(r'\n{3,}', '\n\n', s)
+    # trim
+    return s.strip()
+
+
 @app.route('/')
 def index():
     return send_from_directory('.', 'index.html')
 
 
+@app.route('/checkpoints')
+def list_checkpoints():
+    """List all available checkpoint directories in myNanoGPT."""
+    repo_root = Path(__file__).resolve().parents[1]
+    mynano_dir = repo_root / 'myNanoGPT'
+    checkpoints = sorted([p.name for p in mynano_dir.glob('out_*') if p.is_dir() and (p / 'ckpt.pt').exists()])
+    return jsonify({'checkpoints': checkpoints})
+
+
 @app.route('/generate')
 def generate():
-    # dataset param: 'movies' or 'twitter'
-    dataset = request.args.get('dataset', 'movies')
+    # Accept either 'dataset' (legacy) or 'checkpoint' (new)
+    dataset = request.args.get('dataset', None)
+    checkpoint = request.args.get('checkpoint', None)
     max_new_tokens = request.args.get('max_new_tokens', '120')
     temperature = request.args.get('temperature', None)
-    # Map dataset to out dir names - adjust if your checkpoint dirs differ
-    out_dirs = {
-        'movies': 'out_movies',
-        'movies_v2': 'out_movies_clean_v2',
-        'twitter': 'out_twitter',
-    }
-    out_dir = out_dirs.get(dataset, 'out_movies')
+    
+    # Determine which out_dir to use
+    if checkpoint:
+        out_dir = checkpoint
+    elif dataset:
+        # Legacy dataset mapping
+        out_dirs = {
+            'movies': 'out_movies',
+            'movies_v2': 'out_movies_clean_v2',
+            'twitter': 'out_twitter',
+        }
+        out_dir = out_dirs.get(dataset, 'out_movies')
+    else:
+        out_dir = 'out_movies'
 
     # Run sample.py from the myNanoGPT folder (we keep the model and scripts there)
     repo_root = Path(__file__).resolve().parents[1]
@@ -60,6 +99,9 @@ def generate():
     # add temperature if provided
     if temperature is not None:
         cmd.append(f'--temperature={temperature}')
+    # use a random seed each time so we get different outputs on multiple calls
+    random_seed = random.randint(0, 2**31 - 1)
+    cmd.append(f'--seed={random_seed}')
 
     # Ensure the requested out_dir exists and has a checkpoint
     out_dir_path = mynano_dir / out_dir

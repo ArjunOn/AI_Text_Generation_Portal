@@ -26,6 +26,10 @@
         <select id="datasetSelect">
           <option value="movies">Movies</option>
         </select>
+        <label class="small">Checkpoint</label>
+        <select id="checkpointSelect">
+          <option value="">Loading...</option>
+        </select>
         <label class="small">Tokens</label>
         <input id="tokens" type="number" value="120" min="8" max="1024" />
         <button id="generateButton">Generate Text</button>
@@ -42,15 +46,50 @@
     const btn = document.getElementById('generateButton');
     const out = document.getElementById('output');
     const loading = document.getElementById('loading');
+    const checkpointSelect = document.getElementById('checkpointSelect');
+
+    // Load available checkpoints on page load
+    async function loadCheckpoints(){
+      try{
+        const res = await fetch('/checkpoints');
+        const data = await res.json();
+        checkpointSelect.innerHTML = '';
+        if (data.checkpoints && data.checkpoints.length > 0){
+          data.checkpoints.forEach(ckpt => {
+            const opt = document.createElement('option');
+            opt.value = ckpt;
+            opt.textContent = ckpt;
+            checkpointSelect.appendChild(opt);
+          });
+          // Select the latest (last) checkpoint by default
+          checkpointSelect.selectedIndex = data.checkpoints.length - 1;
+        } else {
+          const opt = document.createElement('option');
+          opt.value = '';
+          opt.textContent = 'No checkpoints found';
+          checkpointSelect.appendChild(opt);
+        }
+      } catch (e){
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'Error loading checkpoints';
+        checkpointSelect.appendChild(opt);
+      }
+    }
+    loadCheckpoints();
 
     async function generate(){
-      const dataset = document.getElementById('datasetSelect').value;
+      const checkpoint = document.getElementById('checkpointSelect').value;
+      if (!checkpoint){
+        out.textContent = 'Error: No checkpoint selected.';
+        return;
+      }
       const tokens = document.getElementById('tokens').value || 120;
       loading.style.display = 'inline-block';
       btn.disabled = true;
       out.textContent = '';
       try{
-        const res = await fetch(`/generate?dataset=${encodeURIComponent(dataset)}&max_new_tokens=${encodeURIComponent(tokens)}`);
+        const res = await fetch(`/generate?checkpoint=${encodeURIComponent(checkpoint)}&max_new_tokens=${encodeURIComponent(tokens)}`);
         const data = await res.json();
         if (data.error){
           out.textContent = 'Error: ' + data.error + (data.stderr ? '\n\n' + data.stderr : '');
