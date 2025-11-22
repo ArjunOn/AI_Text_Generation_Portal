@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""Simple cleaning for the movies input corpus.
+"""Aggressive cleaner for the movies corpus.
 
-This script:
-- backs up `data/movies/input.txt` -> `data/movies/input_raw.txt`
-- strips HTML tags, unescapes HTML entities
-- removes non-printable/control characters and excessive punctuation
-- collapses multiple whitespace to single spaces and preserves newlines
-- writes cleaned output back to `data/movies/input.txt` and also to
-  `data/movies/input_clean.txt` for safety.
+Creates `input_clean.txt` from `input_raw.txt` (or `input.txt` if raw missing).
+This cleaner:
+- fully unescapes HTML entities
+- removes HTML tags using regex
+- removes sequences of angle-bracket-like tokens and xml/html entities
+- strips leftover markup tokens like <b>, </span>, &nbsp;, etc.
+- removes isolated symbols (@, $, ^, %), excessive repeated punctuation, and control chars
+- preserves sentence punctuation (.,!?;:) and newlines, collapses repeated spaces
 
-Run from the `myNanoGPT` folder with the environment python.
+Also prints small before/after snippets for quick inspection.
 """
 import re
 import html
@@ -17,51 +18,68 @@ from pathlib import Path
 
 
 DATA_DIR = Path(__file__).resolve().parents[1] / 'data' / 'movies'
-IN_FILE = DATA_DIR / 'input.txt'
-RAW_BACKUP = DATA_DIR / 'input_raw.txt'
-CLEAN_OUT = DATA_DIR / 'input_clean.txt'
+RAW = DATA_DIR / 'input_raw.txt'
+IN = DATA_DIR / 'input.txt'
+OUT = DATA_DIR / 'input_clean.txt'
 
 
-def clean_text(text: str) -> str:
-    # Unescape HTML entities first
+def aggressive_clean(text: str) -> str:
+    # unescape HTML entities
     text = html.unescape(text)
-    # Remove common HTML tags (naive but effective for this corpus)
+    # remove common HTML tags and attributes
+    text = re.sub(r'<script[^>]*>.*?</script>', ' ', text, flags=re.S|re.I)
+    text = re.sub(r'<style[^>]*>.*?</style>', ' ', text, flags=re.S|re.I)
+    text = re.sub(r'<!--.*?-->', ' ', text, flags=re.S)
+    # remove all tags
     text = re.sub(r'<[^>]+>', ' ', text)
-    # Replace sequences of punctuation that look like corrupted tags
-    text = re.sub(r'[\[\]{}<>/\\=*_~]+', ' ', text)
-    # Remove non-printable/control characters
-    text = ''.join(ch if (31 < ord(ch) < 127 or ch == '\n' or ch == '\t') else ' ' for ch in text)
-    # Collapse multiple spaces into one
-    text = re.sub(r'\s+', ' ', text)
-    # Restore reasonable sentence breaks: ensure newlines between paragraphs
+    # remove bracketed annotations like [applause], (laughs)
+    text = re.sub(r'\[[^\]]+\]', ' ', text)
+    text = re.sub(r'\([^\)]+\)', ' ', text)
+    # remove leftover tokens with lots of punctuation or weird chars
+    text = re.sub(r'[\[\]{}|\\/=_*~]+', ' ', text)
+    # remove sequences of @ $ % ^ & that appear noisy
+    text = re.sub(r'[@$%^&+=]+', ' ', text)
+    # remove HTML entities leftover like &nbsp;
+    text = re.sub(r'&[a-zA-Z0-9#]+;', ' ', text)
+    # remove non-printable/control characters except newline and tab
+    text = ''.join(ch if (31 < ord(ch) < 127 or ch in '\n\t') else ' ' for ch in text)
+    # collapse multiple punctuation to single (except keep sentence enders)
+    text = re.sub(r'([!?.]){2,}', r'\1', text)
+    # replace runs of other punctuation with a single space
+    text = re.sub(r'["\-:;,_<>]{2,}', ' ', text)
+    # keep only basic punctuation and alphanumerics, preserving sentence punctuation and newlines
+    text = re.sub(r'[^\w\s\.,!\?;:\'"\-\(\)]', ' ', text)
+    # collapse whitespace
+    text = re.sub(r'[ \t\f\v]+', ' ', text)
     text = re.sub(r'\s*\n\s*', '\n', text)
-    # Trim
-    text = text.strip()
-    return text
+    # strip leading/trailing
+    return text.strip()
 
 
 def main():
-    if not IN_FILE.exists():
-        print(f'Input file not found: {IN_FILE}')
-        return
-    # Backup raw
-    if not RAW_BACKUP.exists():
-        print(f'Backing up raw input to {RAW_BACKUP}')
-        IN_FILE.replace(RAW_BACKUP)
-        # put RAW_BACKUP back to IN_FILE for cleaning step
-        raw = RAW_BACKUP.read_text(encoding='utf-8')
+    if RAW.exists():
+        src = RAW.read_text(encoding='utf-8')
+        print(f'Using backup raw: {RAW}')
+    elif IN.exists():
+        src = IN.read_text(encoding='utf-8')
+        print(f'Raw backup not found, using current input: {IN}')
     else:
-        raw = IN_FILE.read_text(encoding='utf-8')
+        print('No input file found.')
+        return
 
-    print('Cleaning text...')
-    cleaned = clean_text(raw)
+    print('Original sample (first 400 chars):')
+    print(src[:400].replace('\n','\\n'))
 
-    # write clean outputs
-    CLEAN_OUT.write_text(cleaned, encoding='utf-8')
-    # overwrite the original input.txt so prepare.py picks it up
-    IN_FILE.write_text(cleaned, encoding='utf-8')
-    print(f'Wrote cleaned input to {IN_FILE} and {CLEAN_OUT}')
-    print(f'Original length: {len(raw):,} chars, cleaned length: {len(cleaned):,} chars')
+    cleaned = aggressive_clean(src)
+
+    print('\nCleaned sample (first 400 chars):')
+    print(cleaned[:400].replace('\n','\\n'))
+
+    OUT.write_text(cleaned, encoding='utf-8')
+    # overwrite working input.txt so prepare.py picks it up
+    IN.write_text(cleaned, encoding='utf-8')
+    print(f'Wrote cleaned input to {OUT} and replaced {IN}')
+    print(f'Original length: {len(src):,}, cleaned length: {len(cleaned):,}')
 
 
 if __name__ == '__main__':

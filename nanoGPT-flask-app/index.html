@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>nanoGPT Demo</title>
+  <style>
+    body { font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background:#0f1724; color:#e6eef8; margin:0; padding:2rem; }
+    .container{ max-width:960px; margin:0 auto; }
+    header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem }
+    h1{ font-size:1.6rem; margin:0 }
+    .controls{ display:flex; gap:0.5rem; align-items:center }
+    select, button, input{ padding:0.6rem 0.8rem; border-radius:8px; border:1px solid rgba(255,255,255,0.06); background:#071022; color:#e6eef8 }
+    button#generateButton{ background:linear-gradient(90deg,#7c3aed,#06b6d4); border:none; cursor:pointer }
+    pre#output{ background:#071832; padding:1rem; border-radius:8px; min-height:160px; white-space:pre-wrap; overflow:auto }
+    .small{ font-size:0.9rem; color:#9fb0c8 }
+    .loading{ display:inline-block; margin-left:0.6rem }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>nanoGPT Text Generator</h1>
+      <div class="controls">
+        <label class="small">Dataset</label>
+        <select id="datasetSelect">
+          <option value="movies">Movies</option>
+          <option value="movies_v2">Movies (clean v2)</option>
+          <option value="twitter">Twitter</option>
+        </select>
+        <label class="small">Tokens</label>
+        <input id="tokens" type="number" value="120" min="8" max="1024" />
+        <button id="generateButton">Generate Text</button>
+        <span id="loading" class="loading" style="display:none">Generating…</span>
+      </div>
+    </header>
+
+    <main>
+      <pre id="output">Press "Generate Text" to start.</pre>
+    </main>
+  </div>
+
+  <script>
+    const btn = document.getElementById('generateButton');
+    const out = document.getElementById('output');
+    const loading = document.getElementById('loading');
+
+    async function generate(){
+      const dataset = document.getElementById('datasetSelect').value;
+      const tokens = document.getElementById('tokens').value || 120;
+      loading.style.display = 'inline-block';
+      btn.disabled = true;
+      out.textContent = '';
+      try{
+        const res = await fetch(`/generate?dataset=${encodeURIComponent(dataset)}&max_new_tokens=${encodeURIComponent(tokens)}`);
+        const data = await res.json();
+        if (data.error){
+          out.textContent = 'Error: ' + data.error + (data.stderr ? '\n\n' + data.stderr : '');
+        } else {
+          out.textContent = data.output || '(no output)';
+        }
+      } catch (e){
+        out.textContent = 'Request failed: ' + e;
+      } finally {
+        loading.style.display = 'none';
+        btn.disabled = false;
+      }
+    }
+
+    btn.addEventListener('click', generate);
+  </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+# Ignore large or auto-generated files for the movies project
+# Checkpoints, dataset binaries and raw backups
+out_movies/
+data/movies/*.bin
+data/movies/input_raw.txt
+
+# logs (optional - keep small logs tracked)
+# Uncomment if you want to keep live logs out of git
+# out-movies-train.log
+# out-movies-train.err
+
+# Python artifacts
+__pycache__/
+.venv/
+*.pyc
