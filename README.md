@@ -166,5 +166,3 @@ This document outlines an 8-session workshop series to build an AI Text Generati
 
 
 ---
-
-If you'd like, I will commit this `readme.md` to the repo and push the changes. Should I proceed? (I will commit & push automatically if you say yes.)

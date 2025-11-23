@@ -38,4 +38,3 @@ Notes
 - Keep at least one checkpoint (e.g. `out_movies_long_ft/ckpt.pt`) if you want to serve the model with the UI.
 - The Flask UI expects the checkpoint directory to contain `ckpt.pt`.
 
-If you want, I can add a small helper to archive old checkpoints and rotate logs automatically — tell me when you want that.

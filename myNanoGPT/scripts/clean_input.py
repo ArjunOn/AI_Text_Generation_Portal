@@ -37,18 +37,24 @@ def aggressive_clean(text: str) -> str:
     text = re.sub(r'\([^\)]+\)', ' ', text)
     # remove leftover tokens with lots of punctuation or weird chars
     text = re.sub(r'[\[\]{}|\\/=_*~]+', ' ', text)
-    # remove sequences of @ $ % ^ & that appear noisy
-    text = re.sub(r'[@$%^&+=]+', ' ', text)
+    # remove sequences of @ $ % ^ & * ~ that appear noisy
+    text = re.sub(r'[@$%^&+=*~]+', ' ', text)
     # remove HTML entities leftover like &nbsp;
     text = re.sub(r'&[a-zA-Z0-9#]+;', ' ', text)
     # remove non-printable/control characters except newline and tab
     text = ''.join(ch if (31 < ord(ch) < 127 or ch in '\n\t') else ' ' for ch in text)
     # collapse multiple punctuation to single (except keep sentence enders)
     text = re.sub(r'([!?.]){2,}', r'\1', text)
-    # replace runs of other punctuation with a single space
-    text = re.sub(r'["\-:;,_<>]{2,}', ' ', text)
+    # remove runs of non-word punctuation (e.g. '^^^', '***', '%%%')
+    text = re.sub(r'[^\w\s]{2,}', ' ', text)
+    # remove isolated single punctuation tokens that appear between spaces (e.g. ' @ ', ' $ ')
+    text = re.sub(r'(?<=\s)[^\w\s](?=\s)', ' ', text)
+    # normalize smart quotes and similar characters to ascii equivalents
+    text = text.replace('\u2018', "'").replace('\u2019', "'").replace('\u201c', '"').replace('\u201d', '"')
     # keep only basic punctuation and alphanumerics, preserving sentence punctuation and newlines
     text = re.sub(r'[^\w\s\.,!\?;:\'"\-\(\)]', ' ', text)
+    # remove isolated single-letter tokens except the valid words 'a' and 'I'
+    text = re.sub(r'(?<=\s)(?!(?:a|I)\b)[A-Za-z](?=\s)', ' ', text)
     # collapse whitespace
     text = re.sub(r'[ \t\f\v]+', ' ', text)
     text = re.sub(r'\s*\n\s*', '\n', text)

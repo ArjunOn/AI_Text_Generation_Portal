@@ -62,7 +62,3 @@ The UI looks for `ckpt.pt` inside the checkpoint folders (names matching `out_*`
 Notes
 -----
 - The UI now supports selecting an explicit checkpoint (not just dataset), and the backend uses a fresh random seed for each generation so repeated clicks produce varied outputs.
-- If you want me to add a quick helper to rotate (archive) old checkpoints or truncate logs periodically, I can add that as a follow-up.
-
----
-
