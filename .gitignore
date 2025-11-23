@@ -29,3 +29,16 @@ Workshop_3.pptx
 Modelling/Workshop_4.pptx
 Modelling/*.pptx
 Workshop_7.pptx
+
+# Project logs and training artifacts (keep these out of Git)
+myNanoGPT/*.log
+myNanoGPT/*.err
+myNanoGPT/logs/
+nanoGPT-flask-app/flask_out.log
+nanoGPT-flask-app/flask_err.log
+nanoGPT-flask-app/logs/
+
+# Virtual envs and caches
+Modelling/nanoGPT/.venv/
+__pycache__/
+*.pyc

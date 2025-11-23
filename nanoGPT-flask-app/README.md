@@ -33,59 +33,36 @@ nanoGPT-flask-app/
 └── train.py
 ```
 
-## 🚀 Quick Start
+## Quick start (how I run the UI)
 
-### Prerequisites
-- Python 3.8+
-- UV package manager (or pip)
-- 8GB+ RAM recommended
-- GPU optional (for faster generation)
+I keep the UI intentionally small and local — a single-file Flask backend (`app.py`) tying the frontend (`index.html`) to the sampling script inside `myNanoGPT/`.
 
-### Installation
+What I do locally to run it:
 
-1. **Clone the repository**
-```bash
-   git clone <repo-url>
-   cd nanoGPT-flask-app
+1) Activate your Python environment (the project uses the virtualenv under `Modelling/nanoGPT/.venv` in my setup).
+
+2) Start the app from the repo root (so paths resolve):
+
+```powershell
+cd A:\Projects\AI_Text_Generation_Portal\nanoGPT-flask-app
+# use the venv python you installed dependencies into
+A:\Projects\AI_Text_Generation_Portal\Modelling\nanoGPT\.venv\Scripts\python.exe app.py
 ```
 
-2. **Set up virtual environment**
-```bash
-   # Using UV
-   uv venv
-   # Activate
-   .venv\Scripts\activate      # On Windows
-   # Install dependencies
-   uv add flask
-```
+3) Open http://127.0.0.1:5000 in your browser. The UI will fetch available checkpoint folders from `myNanoGPT/` and auto-select the latest checkpoint.
 
-3. **Run the application**
-```bash
-python app.py
-```
+Where logs go
+---------------
+To keep the folders tidy, runtime logs are written into `myNanoGPT/logs/` (the Flask app creates this folder automatically). The repo's `.gitignore` excludes these logs so the repo doesn't bloat with training artifacts.
 
-4. **Open in browser**
-Navigate to: http://localhost:5000
+Checkpoints
+-----------
+The UI looks for `ckpt.pt` inside the checkpoint folders (names matching `out_*`). Keep at least one checkpoint (for example `out_movies_long_ft/ckpt.pt`) if you want to generate text.
 
-## 🎮 Usage
-
-1. **Select Dataset**: Choose between Movies or Twitter dataset from the dropdown
-2. **Generate Text**: Click the "Generate Text" button
-3. **View Output**: Generated text will appear in the output area
-4. **Generate Again**: Click the button again to generate new text
-
-## 🔧 Training New Models
-
-Follow the instructions in the repo to prepare data, run `prepare.py`, and train with `train.py`.
-
-## ⚙️ Configuration
-
-Edit `config.py` to modify training and model hyperparameters.
-
-## 🛠️ Troubleshooting
-
-- If Flask not installed: `uv add flask`
-- If model not found: ensure checkpoint folders exist or run training
+Notes
+-----
+- The UI now supports selecting an explicit checkpoint (not just dataset), and the backend uses a fresh random seed for each generation so repeated clicks produce varied outputs.
+- If you want me to add a quick helper to rotate (archive) old checkpoints or truncate logs periodically, I can add that as a follow-up.
 
 ---
 

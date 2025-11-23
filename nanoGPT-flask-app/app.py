@@ -8,6 +8,18 @@ from pathlib import Path
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 
+# Ensure a central logs folder exists (we store flask logs under myNanoGPT/logs)
+logs_dir = Path(__file__).resolve().parents[1] / 'myNanoGPT' / 'logs'
+logs_dir.mkdir(parents=True, exist_ok=True)
+
+import logging
+file_handler = logging.FileHandler(str(logs_dir / 'flask.log'))
+file_handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+file_handler.setFormatter(formatter)
+app.logger.addHandler(file_handler)
+logging.getLogger().addHandler(file_handler)
+
 
 def extract_generated_text(raw: str) -> str:
     """Extract the generated sample(s) from sample.py stdout.
